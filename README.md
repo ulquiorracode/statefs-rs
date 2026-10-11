@@ -119,6 +119,43 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+### Modern Multi-Source Configuration Pipeline (`statefs-config`)
+
+Compose layered configs with explicit merge/join policies, scoped sub-builders, and capability traits:
+
+```rust
+use statefs_adapter_bridge_config::{
+    ConfigAccess, ConfigManager, ConfigMut, Defaults, Env, Toml,
+};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut cfg = ConfigManager::builder()
+        // Join fallback defaults (existing keys are preserved)
+        .join(Defaults::new()
+            .set("server/port", 27015)
+            .set("server/tickrate", 64))
+        // Merge file configs and environment variables (incoming values override)
+        .merge(Toml::string("[server]\nhostname = 'Pro Server'")?)
+        .merge(Env::prefixed("GAME_").separator("__"))
+        // Scoped sub-tree configuration
+        .scope("plugins", |sub| {
+            sub.merge(Defaults::new().set("vip/enabled", true))
+        })
+        .build()?;
+
+    // Generic zero-copy reading
+    let port: u16 = cfg.get("server/port")?;
+    let hostname: &str = cfg.get("server/hostname")?;
+    assert_eq!(port, 27015);
+
+    // Runtime mutation via ConfigMut capability
+    cfg.set("server/tickrate", 128)?;
+    assert_eq!(cfg.get::<i64>("server/tickrate")?, 128);
+
+    Ok(())
+}
+```
+
 ### Live HTTP / Axum Telemetry & Inspector Bridge
 
 Serve live state and allow remote updates over HTTP with atomic revision tracking (`X-StateFS-Revision`):
@@ -211,11 +248,11 @@ The StateFS ecosystem is structured around decoupled, zero-cost modular domains:
   - **[`statefs-adapter-opt-mmap`](adapters/opt/statefs-adapter-opt-mmap)**: Zero-copy `memmap2` + `zerocopy` physical storage backing with version and boundary verification.
   - **[`statefs-adapter-opt-lockfree`](adapters/opt/statefs-adapter-opt-lockfree)**: Lock-free SPSC continuous BipBuffer WAL mutation stream adapter via `bbqueue`.
 - **Bridges (`adapters/bridge/`)**:
+  - **[`statefs-adapter-bridge-config`](adapters/bridge/statefs-adapter-bridge-config)**: Modern, decoupled configuration stack (`statefs-config`) with Ports & Adapters (`ConfigStoragePort`), pluggable sources (`ConfigSourcePort`), Figment-inspired push policies (`Merge` vs `Join`), and C#-style trait capability composition (`ConfigAccess`, `ConfigMut`, `ConfigPersist`).
   - **[`statefs-adapter-bridge-serde`](adapters/bridge/statefs-adapter-bridge-serde)**: Zero-copy/direct Serde deserializer extracting arbitrary strongly-typed structs from virtual subtrees.
   - **[`statefs-adapter-bridge-http`](adapters/bridge/statefs-adapter-bridge-http)**: High-performance Axum 0.8 HTTP REST API & telemetry inspector with atomic `X-StateFS-Revision`.
   - **[`statefs-adapter-bridge-env`](adapters/bridge/statefs-adapter-bridge-env)**: Automated environment variable ingestion with prefix filtering and scalar type inference.
   - **[`statefs-adapter-c`](adapters/bridge/statefs-adapter-c)**: Universal C-ABI dynamic and static library bridge with C header (`include/statefs.h`) and panic barriers.
-  - **[`statefs-adapter-bridge-config`](adapters/bridge/statefs-adapter-bridge-config)**: Drop-in compatibility wrapper for code using `config-rs`.
 - **Compute Adapters (`adapters/compute/`)**:
   - **[`statefs-adapter-compute-rayon`](adapters/compute/statefs-adapter-compute-rayon)**: Thread-pool parallel batch queries via `rayon`.
 - **VFS Domain (`vfs/`)**:
