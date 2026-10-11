@@ -12,7 +12,9 @@ pub mod builder;
 pub use builder::{StateFs, StateFsBuilder, StateFsError};
 #[cfg(feature = "config")]
 pub use statefs_adapter_bridge_config::{
-    ConfigBridge, ConfigError, ConfigInstance, ConfigProvider, Defaults, Profile, StateFsConfig,
+    Config, ConfigAccess, ConfigBridge, ConfigError, ConfigInstance, ConfigManager, ConfigMut,
+    ConfigPersist, ConfigSourcePort, ConfigStoragePort, Defaults, DictSource, Profile, PushPolicy,
+    StateFsConfig, StateFsStorageAdapter,
 };
 pub use statefs_adapter_opt_cache::{DEFAULT_CACHE_CAP, L1PathCache};
 pub use statefs_adapter_opt_simd::SimdPathScanner;
