@@ -10,6 +10,7 @@ use std::sync::Arc;
 ///
 /// Holds the underlying storage engine (`ConfigStoragePort`), active profile label,
 /// and optional mount prefix. All queries (`.get::<T>()`) run with zero redundant copies.
+#[derive(Debug)]
 pub struct Config<S: ConfigStoragePort = StateFsStorageAdapter> {
     storage: S,
     profile: Arc<str>,
@@ -125,6 +126,67 @@ impl<S: ConfigStorageMut> ConfigMut for Config<S> {
         let full = self.resolve_path(path);
         let p = Path::parse(&full);
         self.storage.remove(&p)
+    }
+}
+
+/// A validated configuration wrapper enforcing a [`RuleSet`] upon runtime mutations.
+#[derive(Debug)]
+pub struct ValidatedConfig<S: ConfigStoragePort = StateFsStorageAdapter> {
+    inner: Config<S>,
+    rules: crate::validation::RuleSet,
+}
+
+impl<S: ConfigStoragePort> ValidatedConfig<S> {
+    /// Creates a new validated configuration container.
+    pub fn new(inner: Config<S>, rules: crate::validation::RuleSet) -> Self {
+        Self { inner, rules }
+    }
+
+    /// Returns a reference to the inner configuration container.
+    pub fn inner(&self) -> &Config<S> {
+        &self.inner
+    }
+
+    /// Returns a mutable reference to the inner configuration container.
+    pub fn inner_mut(&mut self) -> &mut Config<S> {
+        &mut self.inner
+    }
+
+    /// Unwraps this container into the underlying [`Config`].
+    pub fn into_inner(self) -> Config<S> {
+        self.inner
+    }
+}
+
+impl<S: ConfigStoragePort> ConfigAccess for ValidatedConfig<S> {
+    #[inline]
+    fn get<'a, T: FromConfigValue<'a>>(&'a self, path: &str) -> Result<T, ConfigError> {
+        self.inner.get(path)
+    }
+
+    #[inline]
+    fn contains(&self, path: &str) -> bool {
+        self.inner.contains(path)
+    }
+
+    #[cfg(feature = "serde")]
+    fn extract<T: for<'de> serde::Deserialize<'de>>(&self, path: &str) -> Result<T, ConfigError> {
+        self.inner.extract(path)
+    }
+}
+
+impl<S: ConfigStorageMut> ConfigMut for ValidatedConfig<S> {
+    fn set<T: IntoConfigValue>(&mut self, path: &str, val: T) -> Result<(), ConfigError> {
+        // Optimistic application followed by validation rollback if violated
+        self.inner.set(path, val)?;
+        if let Err(report) = self.rules.evaluate(self.inner.storage()) {
+            return Err(ConfigError::Validation(report));
+        }
+        Ok(())
+    }
+
+    fn remove(&mut self, path: &str) -> Result<bool, ConfigError> {
+        self.inner.remove(path)
     }
 }
 

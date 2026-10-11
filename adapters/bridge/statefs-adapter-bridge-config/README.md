@@ -17,6 +17,11 @@ Modern, high-performance configuration management engine for StateFS, featuring 
   - `ConfigAccess`: unified generic `.get::<T>(path)` supporting zero-copy `&str`, primitive integers/floats, booleans, and Serde-deserializable structs.
   - `ConfigMut`: safe runtime mutation and deletion (`.set()`, `.remove()`).
   - `ConfigPersist`: save mutations back to storage.
+- **Orthogonal SMA Validation Subsystem**:
+  - `ConfigRule` SPI port for decoupled validation rules.
+  - Declarative rules: `Rule::required`, `Rule::range`, `Rule::choices`, `Rule::custom`.
+  - Compile-time pre-flight verification barrier during `.build()`.
+  - Runtime mutation contract enforcement via `ValidatedConfig` (`.build_validated()`).
 - **Scoped Sub-Builders**:
   - Modular nested configurations via `.scope("prefix", |sub| ...)`.
 - **Zero-Copy Performance**:
@@ -26,10 +31,10 @@ Modern, high-performance configuration management engine for StateFS, featuring 
 
 ```rust
 use statefs_adapter_bridge_config::{
-    ConfigAccess, ConfigManager, ConfigMut, Defaults, DictSource, Toml, Json, Env,
+    ConfigAccess, ConfigManager, ConfigMut, Defaults, DictSource, Toml, Json, Env, Rule,
 };
 
-// 1. Build configuration pipeline
+// 1. Build configuration pipeline with contract validation
 let mut cfg = ConfigManager::builder()
     // Join defaults (fallback)
     .join(Defaults::new()
@@ -38,6 +43,9 @@ let mut cfg = ConfigManager::builder()
         .set("server/tickrate", 64))
     // Merge environment variables (GAME_* prefix)
     .merge(Env::prefixed("GAME_").separator("__"))
+    // Attach orthogonal validation rules
+    .rule(Rule::required("server/hostname"))
+    .rule(Rule::range("server/port", 1.0, 65535.0))
     // Nested modular scope for plugins
     .scope("plugins", |sub| {
         sub.merge(Defaults::new().set("vip/enabled", true))
