@@ -9,7 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- First public release of `statefs-core` nanokernel.
+- Redesigned `statefs-adapter-bridge-config` into modern, decoupled `statefs-config` engine inspired by C# `configuration-system` capability composition and Figment merge policies:
+  - Ports & Adapters architecture: `ConfigStoragePort` / `ConfigStorageMut` abstraction separating physical representation from query model, with `StateFsStorageAdapter` wrapping StateFS `MemStore` as zero-cost in-memory kernel.
+  - Multi-source SPI port `ConfigSourcePort` with composable adapters: `Defaults`, `DictSource`, `Toml`, `Json`, and `Env`.
+  - Explicit push semantics: `PushPolicy::Merge` (incoming wins, recursive override) and `PushPolicy::Join` (existing wins, fallback defaults).
+  - Trait capability composition: `ConfigAccess` (unified generic zero-copy `.get::<T>()`, `.contains()`, `.profile()`), `ConfigMut` (`.set()`, `.remove()`), and `ConfigPersist` (`.save()`).
+  - Scoped sub-builders and prefix combinators: `.scope("prefix", |sub| ...)` and `.at("prefix")` mounting.
+  - First public release of `statefs-core` nanokernel.
 - Dense Left-Child / Right-Sibling `ArenaNode` prefix tree architecture over 32-bit indices.
 - Global string deduplication (`StringPool`) with zero heap duplication for recurring keys.
 - SIMD-accelerated path segment scanning via `memchr2` (AVX2, SSE4.2, NEON).
