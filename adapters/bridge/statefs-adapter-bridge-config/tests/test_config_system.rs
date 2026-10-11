@@ -172,7 +172,10 @@ fn test_json_source_and_combinator_mounting() {
         .unwrap();
 
     assert!(cfg.get::<bool>("plugins/visuals/features/radar").unwrap());
-    assert!(!cfg.get::<bool>("plugins/visuals/features/grenade_trail").unwrap());
+    assert!(
+        !cfg.get::<bool>("plugins/visuals/features/grenade_trail")
+            .unwrap()
+    );
 }
 
 #[cfg(feature = "serde")]
