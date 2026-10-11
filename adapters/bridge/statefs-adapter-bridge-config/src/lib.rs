@@ -23,15 +23,17 @@ pub mod error;
 pub mod manager;
 pub mod model;
 pub mod storage;
+pub mod validation;
 
 // Re-export primary types for top-level ergonomics
 pub use error::ConfigError;
 pub use manager::{ConfigManager, Profile, PushPolicy, StateFsConfig};
 pub use model::{
     Config, ConfigAccess, ConfigInstance, ConfigMut, ConfigPersist, FromConfigValue,
-    IntoConfigValue,
+    IntoConfigValue, ValidatedConfig,
 };
 pub use storage::{ConfigStorageMut, ConfigStoragePort, StateFsStorageAdapter};
+pub use validation::{ConfigRule, Rule, RuleSet, ValidationError, ValidationReport};
 
 // Re-export adapters
 pub use adapters::{ConfigSourcePort, Defaults, DictSource};

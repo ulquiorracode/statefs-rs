@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Explicit push semantics: `PushPolicy::Merge` (incoming wins, recursive override) and `PushPolicy::Join` (existing wins, fallback defaults).
   - Trait capability composition: `ConfigAccess` (unified generic zero-copy `.get::<T>()`, `.contains()`, `.profile()`), `ConfigMut` (`.set()`, `.remove()`), and `ConfigPersist` (`.save()`).
   - Scoped sub-builders and prefix combinators: `.scope("prefix", |sub| ...)` and `.at("prefix")` mounting.
+  - Orthogonal SMA validation subsystem: `ConfigRule` SPI port, declarative `Rule` (`Required`, `Range`, `Choices`, `Custom`), `RuleSet` and `ValidationReport`, pre-flight validation barrier in `.build()`, and `ValidatedConfig` enforcing contracts during runtime mutations.
   - First public release of `statefs-core` nanokernel.
 - Dense Left-Child / Right-Sibling `ArenaNode` prefix tree architecture over 32-bit indices.
 - Global string deduplication (`StringPool`) with zero heap duplication for recurring keys.

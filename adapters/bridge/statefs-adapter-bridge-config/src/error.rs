@@ -24,6 +24,8 @@ pub enum ConfigError {
     Serde(String),
     /// Underlying StateFS store failure.
     Store(StoreError),
+    /// Contract validation error.
+    Validation(crate::validation::ValidationReport),
 }
 
 impl fmt::Display for ConfigError {
@@ -57,6 +59,7 @@ impl fmt::Display for ConfigError {
             }
             Self::Serde(msg) => write!(f, "deserialization error: {msg}"),
             Self::Store(e) => write!(f, "storage engine error: {e}"),
+            Self::Validation(report) => write!(f, "{report}"),
         }
     }
 }
