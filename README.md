@@ -45,9 +45,32 @@ StateFS was benchmarked against the industry-standard [`config-rs`](https://gith
 
 ---
 
-## Architecture
+## Architecture: The SMA Hexagonal Triad
 
-StateFS is architected around the Dense Left-Child / Right-Sibling Arena:
+StateFS adheres strictly to the Sewing Machine Architecture (SMA) **`Port <-> Adapter <-> Provider`** triad, eliminating conceptual entropy and architectural bloat:
+
+```text
+┌───────────────────────────┐      ┌─────────────────────────────┐      ┌────────────────────────────┐
+│           Port            │ ◄──► │           Adapter           │ ◄──► │          Provider          │
+│   (Inward SPI Boundary)   │      │   (Bridge & Translation)    │      │  (Physical State Source)   │
+└───────────────────────────┘      └─────────────────────────────┘      └────────────────────────────┘
+  ConfigStoragePort                  StateFsStorageAdapter                MemStore (Arena Trie)
+  ConfigSourcePort                   TomlSource / EnvSource               Disk / FS / Environment
+  PathOptimizer                      PrefixTokenizer / DirectCache        StringPool / Token Table
+  VfsProvider                        VfsOverlay / DiskMount               OS FileSystem / Package
+```
+
+### Triad Mapping in StateFS
+
+| Architectural Role | Responsibility | Concrete StateFS Artifacts |
+| :--- | :--- | :--- |
+| **`Port`** | Abstract, zero-cost contracts defined by the domain. Zero external vendor types or unsafe pointers cross this boundary. | `ConfigStoragePort`, `ConfigSourcePort`, `PathOptimizer`, `VfsProvider` |
+| **`Adapter`** | Translators connecting a `Port` to a `Provider`. Encapsulates format parsing, FFI panic barriers, and mapping. *Note: Composite Adapters multiplex across ports.* | `StateFsStorageAdapter`, `TomlSource`, `EnvSource`, `ConfigBridge` (`config-rs`), `VfsMountHub` |
+| **`Provider`** | The physical or logical owner of state and truth. Pure domain logic never accesses providers directly. | `MemStore` (L1 Arena), `bbqueue` (WAL stream), `mmap2` (snapshot image), OS Filesystem, `config-rs` |
+
+### Core Arena Layout
+
+Internally, StateFS stores hierarchical structured state in a contiguous Dense Left-Child / Right-Sibling Arena:
 
 ```text
                ┌────────────────────────────────────────────────────────┐
