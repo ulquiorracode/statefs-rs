@@ -60,25 +60,25 @@ pub trait VfsProvider: Send + Sync {
     fn list_dir(&self, relative_path: &str) -> Result<Vec<String>, VfsError>;
 }
 
-/// Mount entry inside [`VfsMountHub`].
+/// Mount entry inside [`VfsMountAdapter`].
 struct MountEntry {
     prefix: String,
     provider: Box<dyn VfsProvider>,
 }
 
-/// Hub that dispatches absolute virtual paths to mounted [`VfsProvider`] instances.
-pub struct VfsMountHub {
+/// Composite adapter that dispatches absolute virtual paths to mounted [`VfsProvider`] instances.
+pub struct VfsMountAdapter {
     mounts: Vec<MountEntry>,
 }
 
-impl Default for VfsMountHub {
+impl Default for VfsMountAdapter {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl VfsMountHub {
-    /// Creates an empty mount hub.
+impl VfsMountAdapter {
+    /// Creates an empty mount adapter.
     pub fn new() -> Self {
         Self { mounts: Vec::new() }
     }
@@ -281,7 +281,7 @@ mod tests {
 
     #[test]
     fn test_vfs_mount_dispatch() {
-        let mut hub = VfsMountHub::new();
+        let mut adapter = VfsMountAdapter::new();
 
         let mut provider1 = MemoryMockProvider {
             files: BTreeMap::new(),
@@ -297,19 +297,19 @@ mod tests {
             .files
             .insert(String::from("game.cfg"), b"mp_timelimit 30".to_vec());
 
-        hub.mount("/cstrike/addons", provider1);
-        hub.mount("/cstrike", provider2);
+        adapter.mount("/cstrike/addons", provider1);
+        adapter.mount("/cstrike", provider2);
 
         // Longest prefix match: /cstrike/addons
-        let content1 = hub.read_file("/cstrike/addons/server.cfg").unwrap();
+        let content1 = adapter.read_file("/cstrike/addons/server.cfg").unwrap();
         assert_eq!(content1, b"hostname Test");
 
         // General prefix match: /cstrike
-        let content2 = hub.read_file("/cstrike/game.cfg").unwrap();
+        let content2 = adapter.read_file("/cstrike/game.cfg").unwrap();
         assert_eq!(content2, b"mp_timelimit 30");
 
         // Not found
-        assert!(hub.read_file("/valve/unknown.cfg").is_err());
+        assert!(adapter.read_file("/valve/unknown.cfg").is_err());
     }
 
     #[test]
@@ -346,7 +346,7 @@ mod tests {
 
     #[test]
     fn test_vfs_root_mount() {
-        let mut hub = VfsMountHub::new();
+        let mut adapter = VfsMountAdapter::new();
         let mut root_provider = MemoryMockProvider {
             files: BTreeMap::new(),
         };
@@ -357,14 +357,14 @@ mod tests {
             .files
             .insert(String::from("sub/deep.cfg"), b"cl_cmdrate 101".to_vec());
 
-        hub.mount("/", root_provider);
+        adapter.mount("/", root_provider);
 
         // Root files must resolve with leading slash stripped
-        let content1 = hub.read_file("/autoexec.cfg").unwrap();
+        let content1 = adapter.read_file("/autoexec.cfg").unwrap();
         assert_eq!(content1, b"fps_max 144");
 
         // Sub-paths under root must resolve
-        let content2 = hub.read_file("/sub/deep.cfg").unwrap();
+        let content2 = adapter.read_file("/sub/deep.cfg").unwrap();
         assert_eq!(content2, b"cl_cmdrate 101");
     }
 

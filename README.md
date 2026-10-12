@@ -65,7 +65,7 @@ StateFS adheres strictly to the Sewing Machine Architecture (SMA) **`Port <-> Ad
 | Architectural Role | Responsibility | Concrete StateFS Artifacts |
 | :--- | :--- | :--- |
 | **`Port`** | Abstract, zero-cost contracts defined by the domain. Zero external vendor types or unsafe pointers cross this boundary. | `ConfigStoragePort`, `ConfigSourcePort`, `PathOptimizer`, `VfsProvider` |
-| **`Adapter`** | Translators connecting a `Port` to a `Provider`. Encapsulates format parsing, FFI panic barriers, and mapping. *Note: Composite Adapters multiplex across ports.* | `StateFsStorageAdapter`, `TomlSource`, `EnvSource`, `ConfigBridge` (`config-rs`), `VfsMountHub` |
+| **`Adapter`** | Translators connecting a `Port` to a `Provider`. Encapsulates format parsing, FFI panic barriers, and mapping. *Note: Composite Adapters multiplex across ports.* | `StateFsStorageAdapter`, `TomlSource`, `EnvSource`, `ConfigBridge` (`config-rs`), `VfsMountAdapter`, `PathOptimizerAdapter` |
 | **`Provider`** | The physical or logical owner of state and truth. Pure domain logic never accesses providers directly. | `MemStore` (L1 Arena), `bbqueue` (WAL stream), `mmap2` (snapshot image), OS Filesystem, `config-rs` |
 
 ### Core Arena Layout
@@ -262,7 +262,7 @@ The StateFS ecosystem is structured around decoupled, zero-cost modular domains:
   - **[`statefs-codec-json`](codecs/statefs-codec-json)**: Streaming JSON ingestion and tree exporter.
   - **[`statefs-codec-bin`](codecs/statefs-codec-bin)**: Flat binary image exporter for instant disk restoration with 32-byte header alignment.
 - **Path Optimization Adapters (`adapters/path/`)**:
-  - **[`statefs-adapter-path-core`](adapters/path/statefs-adapter-path-core)**: `PathOptimizer` trait port, zero-alloc `InlinePath`, and recursive fractal `PathOptimizerHub`.
+  - **[`statefs-adapter-path-core`](adapters/path/statefs-adapter-path-core)**: `PathOptimizer` trait port, zero-alloc `InlinePath`, and recursive fractal `PathOptimizerAdapter`.
   - **[`statefs-adapter-path-tokens`](adapters/path/statefs-adapter-path-tokens)**: High-frequency prefix compression dictionary (`PrefixTokenizer`).
   - **[`statefs-adapter-path-handles`](adapters/path/statefs-adapter-path-handles)**: Direct-mapped direct arena index cache (`PathHandleCache`) bypassing string parsing with epoch-based cache invalidation.
 - **Optimization Adapters (`adapters/opt/`)**:
@@ -281,7 +281,7 @@ The StateFS ecosystem is structured around decoupled, zero-cost modular domains:
 - **Compute Adapters (`adapters/compute/`)**:
   - **[`statefs-adapter-compute-rayon`](adapters/compute/statefs-adapter-compute-rayon)**: Thread-pool parallel batch queries via `rayon`.
 - **VFS Domain (`vfs/`)**:
-  - **[`statefs-vfs-core`](vfs/statefs-vfs-core)**: `VfsProvider` trait port, longest-prefix `VfsMountHub`, and layered `VfsOverlay` search paths.
+  - **[`statefs-vfs-core`](vfs/statefs-vfs-core)**: `VfsProvider` trait port, longest-prefix `VfsMountAdapter`, and layered `VfsOverlay` search paths.
   - **[`statefs-vfs-disk`](vfs/statefs-vfs-disk)**: Sandboxed physical directory mount provider with directory traversal attack prevention.
   - **[`statefs-vfs-package`](vfs/statefs-vfs-package)**: In-memory and zero-copy continuous package container provider (WAD3 / PAK / FlatArchive).
 - **Benchmarks (`benches/`)**:
