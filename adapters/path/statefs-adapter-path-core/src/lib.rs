@@ -1,7 +1,7 @@
-//! # StateFS Path Optimization Core Port & Hub
+//! # StateFS Path Optimization Core Port & Adapter
 //!
 //! Provides the primary [`PathOptimizer`] port abstraction and the recursive
-//! [`PathOptimizerHub`] allowing multiple specialized path compression and
+//! [`PathOptimizerAdapter`] allowing multiple specialized path compression and
 //! normalization adapters to be chained together via `with_step`.
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -82,21 +82,21 @@ pub trait PathOptimizer: Send + Sync {
     fn optimize(&self, path: &mut InlinePath);
 }
 
-/// Composite hub orchestrating a sequence of path optimizers without fixed limits.
+/// Composite adapter orchestrating a sequence of path optimizers without fixed limits.
 ///
-/// Any number of micro-adapters can be appended using [`with_step`](PathOptimizerHub::with_step).
+/// Any number of micro-adapters can be appended using [`with_step`](PathOptimizerAdapter::with_step).
 #[derive(Default)]
-pub struct PathOptimizerHub {
+pub struct PathOptimizerAdapter {
     steps: Vec<Box<dyn PathOptimizer>>,
 }
 
-impl PathOptimizerHub {
-    /// Creates a new empty optimizer hub.
+impl PathOptimizerAdapter {
+    /// Creates a new empty optimizer adapter.
     pub fn new() -> Self {
         Self { steps: Vec::new() }
     }
 
-    /// Appends a new path optimizer step to the hub.
+    /// Appends a new path optimizer step to the adapter.
     ///
     /// Following the recursive composite pattern, this method is named `with_step`
     /// at all levels of hierarchy.
@@ -119,7 +119,7 @@ impl PathOptimizerHub {
     }
 }
 
-impl PathOptimizer for PathOptimizerHub {
+impl PathOptimizer for PathOptimizerAdapter {
     #[inline]
     fn optimize(&self, path: &mut InlinePath) {
         self.run(path);
@@ -174,25 +174,25 @@ mod tests {
     }
 
     #[test]
-    fn test_hub_chaining() {
-        let hub = PathOptimizerHub::new()
+    fn test_adapter_chaining() {
+        let adapter = PathOptimizerAdapter::new()
             .with_step(PrefixTrimmer)
             .with_step(SuffixTrimmer);
 
         let mut path = InlinePath::from_raw("/server/settings/");
-        hub.optimize(&mut path);
+        adapter.optimize(&mut path);
         assert_eq!(path.as_str(), "server/settings");
     }
 
     #[test]
-    fn test_nested_hub_with_step() {
-        let inner_hub = PathOptimizerHub::new().with_step(PrefixTrimmer);
-        let outer_hub = PathOptimizerHub::new()
-            .with_step(inner_hub) // Hub itself is an optimizer step!
+    fn test_nested_adapter_with_step() {
+        let inner_adapter = PathOptimizerAdapter::new().with_step(PrefixTrimmer);
+        let outer_adapter = PathOptimizerAdapter::new()
+            .with_step(inner_adapter) // Adapter itself is an optimizer step!
             .with_step(SuffixTrimmer);
 
         let mut path = InlinePath::from_raw("/plugins/admin/");
-        outer_hub.optimize(&mut path);
+        outer_adapter.optimize(&mut path);
         assert_eq!(path.as_str(), "plugins/admin");
     }
 }

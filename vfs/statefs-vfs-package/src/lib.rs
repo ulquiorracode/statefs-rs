@@ -1,7 +1,7 @@
 //! # StateFS Package & Archive VFS Provider
 //!
 //! Provides zero-allocation, read-only virtual archive mounts (e.g. GoldSrc WAD3 / PAK / FlatPackages)
-//! directly into the [`VfsMountHub`].
+//! directly into the [`VfsMountAdapter`].
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
