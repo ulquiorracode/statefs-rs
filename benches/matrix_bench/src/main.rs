@@ -371,7 +371,7 @@ fn main() {
             let before_mem = ALLOCATOR.allocated();
             let mut store = MemStore::new();
             populate_statefs(&mut store);
-            let mut bridge = ConfigBridge::<64>::new(store);
+            let bridge = ConfigBridge::<64>::new(store);
             let bridge_mem = ALLOCATOR.allocated() - before_mem;
 
             let start = Instant::now();

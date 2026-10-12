@@ -18,6 +18,7 @@ members = [
     "adapters/bridge/statefs-adapter-bridge-http",
     "adapters/bridge/statefs-adapter-c",
     "adapters/compute/statefs-adapter-compute-rayon",
+    "config/statefs-config",
     "vfs/statefs-vfs-core",
     "vfs/statefs-vfs-disk",
     "vfs/statefs-vfs-package",
