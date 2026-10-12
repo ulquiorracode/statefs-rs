@@ -1,4 +1,4 @@
-use statefs_adapter_bridge_config::{ConfigAccess, ConfigManager, ConfigMut, Defaults, DictSource};
+use statefs_config::{ConfigAccess, ConfigManager, ConfigMut, Defaults, DictSource};
 
 #[test]
 fn test_merge_vs_join_policy_semantics() {
@@ -129,7 +129,7 @@ fn test_runtime_mutation_capabilities() {
 #[cfg(feature = "toml")]
 #[test]
 fn test_toml_source_and_combinator_mounting() {
-    use statefs_adapter_bridge_config::{ConfigSourcePort, Toml};
+    use statefs_config::{ConfigSourcePort, Toml};
 
     let toml_str = r#"
 [server]
@@ -155,7 +155,7 @@ hostname = "Mounted TOML"
 #[cfg(feature = "json")]
 #[test]
 fn test_json_source_and_combinator_mounting() {
-    use statefs_adapter_bridge_config::{ConfigSourcePort, Json};
+    use statefs_config::{ConfigSourcePort, Json};
 
     let json_str = r#"
 {

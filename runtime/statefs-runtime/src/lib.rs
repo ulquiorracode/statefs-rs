@@ -10,14 +10,17 @@ extern crate alloc;
 pub mod builder;
 
 pub use builder::{StateFs, StateFsBuilder, StateFsError};
-#[cfg(feature = "config")]
-pub use statefs_adapter_bridge_config::{
-    Config, ConfigAccess, ConfigBridge, ConfigError, ConfigInstance, ConfigManager, ConfigMut,
-    ConfigPersist, ConfigSourcePort, ConfigStoragePort, Defaults, DictSource, Profile, PushPolicy,
-    StateFsConfig, StateFsStorageAdapter,
-};
+#[cfg(feature = "bridge-config")]
+pub use statefs_adapter_bridge_config::{ConfigBridge, StateFsSource};
 pub use statefs_adapter_opt_cache::{DEFAULT_CACHE_CAP, L1PathCache};
 pub use statefs_adapter_opt_simd::SimdPathScanner;
+#[cfg(feature = "config")]
+pub use statefs_config::{
+    Config, ConfigAccess, ConfigError, ConfigInstance, ConfigMut, ConfigPersist, ConfigRule,
+    ConfigSourcePort, ConfigStorageMut, ConfigStoragePort, Defaults, DictSource, Profile,
+    PushPolicy, Rule, RuleSet, StateFsConfig, StateFsStorageAdapter, ValidatedConfig,
+    ValidationError, ValidationReport,
+};
 pub use statefs_core::{MemStore, Node};
 pub use stitch_rs::blackboard::Blackboard;
 pub use stitch_rs::middleware::Terminal;

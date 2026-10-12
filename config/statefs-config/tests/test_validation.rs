@@ -1,6 +1,4 @@
-use statefs_adapter_bridge_config::{
-    ConfigAccess, ConfigError, ConfigManager, ConfigMut, Defaults, Rule,
-};
+use statefs_config::{ConfigAccess, ConfigError, ConfigManager, ConfigMut, Defaults, Rule};
 
 #[test]
 fn test_validation_required_rule() {

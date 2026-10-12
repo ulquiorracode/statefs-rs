@@ -124,8 +124,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 Compose layered configs with explicit merge/join policies, scoped sub-builders, and capability traits:
 
 ```rust
-use statefs_adapter_bridge_config::{
-    ConfigAccess, ConfigManager, ConfigMut, Defaults, Env, Toml,
+use statefs_config::{
+    ConfigAccess, ConfigManager, ConfigMut, Defaults, Env, Rule, Toml,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -247,8 +247,10 @@ The StateFS ecosystem is structured around decoupled, zero-cost modular domains:
   - **[`statefs-adapter-opt-simd`](adapters/opt/statefs-adapter-opt-simd)**: AVX2 / SSE4.2 SIMD path segment scanner via `memchr2`.
   - **[`statefs-adapter-opt-mmap`](adapters/opt/statefs-adapter-opt-mmap)**: Zero-copy `memmap2` + `zerocopy` physical storage backing with version and boundary verification.
   - **[`statefs-adapter-opt-lockfree`](adapters/opt/statefs-adapter-opt-lockfree)**: Lock-free SPSC continuous BipBuffer WAL mutation stream adapter via `bbqueue`.
+- **Configuration Domain (`config/`)**:
+  - **[`statefs-config`](config/statefs-config)**: First-class, decoupled configuration management engine featuring Ports & Adapters (`ConfigStoragePort`), multi-source SPI (`ConfigSourcePort`), Figment merge policies (`Merge` vs `Join`), C#-inspired capability composition (`ConfigAccess`, `ConfigMut`, `ConfigPersist`), and orthogonal SMA contract validation (`Rule`, `RuleSet`, `ValidationReport`).
 - **Bridges (`adapters/bridge/`)**:
-  - **[`statefs-adapter-bridge-config`](adapters/bridge/statefs-adapter-bridge-config)**: Modern, decoupled configuration stack (`statefs-config`) with Ports & Adapters (`ConfigStoragePort`), pluggable sources (`ConfigSourcePort`), Figment-inspired push policies (`Merge` vs `Join`), and C#-style trait capability composition (`ConfigAccess`, `ConfigMut`, `ConfigPersist`).
+  - **[`statefs-adapter-bridge-config`](adapters/bridge/statefs-adapter-bridge-config)**: High-performance compatibility bridge and `config::Source` adapter for the [`config`](https://crates.io/crates/config) (`config-rs`) ecosystem.
   - **[`statefs-adapter-bridge-serde`](adapters/bridge/statefs-adapter-bridge-serde)**: Zero-copy/direct Serde deserializer extracting arbitrary strongly-typed structs from virtual subtrees.
   - **[`statefs-adapter-bridge-http`](adapters/bridge/statefs-adapter-bridge-http)**: High-performance Axum 0.8 HTTP REST API & telemetry inspector with atomic `X-StateFS-Revision`.
   - **[`statefs-adapter-bridge-env`](adapters/bridge/statefs-adapter-bridge-env)**: Automated environment variable ingestion with prefix filtering and scalar type inference.
