@@ -7,6 +7,7 @@
 
 extern crate alloc;
 
+use alloc::borrow::Cow;
 use alloc::boxed::Box;
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -121,27 +122,27 @@ impl VfsMountAdapter {
 
     /// Reads a file from the appropriate mounted provider.
     pub fn read_file(&self, virtual_path: &str) -> Result<Vec<u8>, VfsError> {
-        let clean = clean_path(virtual_path);
+        let clean = clean_path_cow(virtual_path);
         let (provider, rel) = self
-            .resolve_mount(&clean)
+            .resolve_mount(clean.as_ref())
             .ok_or_else(|| VfsError::NotFound(String::from(virtual_path)))?;
         provider.read_file(rel)
     }
 
     /// Fetches metadata from the appropriate mounted provider.
     pub fn metadata(&self, virtual_path: &str) -> Result<VfsMetadata, VfsError> {
-        let clean = clean_path(virtual_path);
+        let clean = clean_path_cow(virtual_path);
         let (provider, rel) = self
-            .resolve_mount(&clean)
+            .resolve_mount(clean.as_ref())
             .ok_or_else(|| VfsError::NotFound(String::from(virtual_path)))?;
         provider.metadata(rel)
     }
 
     /// Lists directory contents from the appropriate mounted provider.
     pub fn list_dir(&self, virtual_path: &str) -> Result<Vec<String>, VfsError> {
-        let clean = clean_path(virtual_path);
+        let clean = clean_path_cow(virtual_path);
         let (provider, rel) = self
-            .resolve_mount(&clean)
+            .resolve_mount(clean.as_ref())
             .ok_or_else(|| VfsError::NotFound(String::from(virtual_path)))?;
         provider.list_dir(rel)
     }
@@ -241,8 +242,20 @@ fn normalize_prefix(prefix: &str) -> String {
 }
 
 /// Cleans path separators and removes redundant slashes, preserving valid UTF-8.
+///
+/// Returns a zero-allocation borrowed `Cow::Borrowed` when the path is already canonical
+/// (starts with `/`, contains no `\` and no consecutive `//`).
+pub fn clean_path_cow<'a>(path: &'a str) -> Cow<'a, str> {
+    if path.starts_with('/') && !path.contains('\\') && !path.contains("//") {
+        Cow::Borrowed(path)
+    } else {
+        Cow::Owned(statefs_core::Path::parse(path).to_string())
+    }
+}
+
+/// Cleans path separators and removes redundant slashes, preserving valid UTF-8.
 pub fn clean_path(path: &str) -> String {
-    statefs_core::Path::parse(path).to_string()
+    clean_path_cow(path).into_owned()
 }
 
 #[cfg(test)]
