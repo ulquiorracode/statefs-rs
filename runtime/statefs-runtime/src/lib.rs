@@ -391,7 +391,12 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "builder", feature = "toml", feature = "json", feature = "std"))]
+    #[cfg(all(
+        feature = "builder",
+        feature = "toml",
+        feature = "json",
+        feature = "std"
+    ))]
     fn test_builder_error_propagation_on_invalid_sources() {
         // Corrupt TOML
         let toml_err = StateFs::builder().with_toml_str("invalid = [toml unclosed");
