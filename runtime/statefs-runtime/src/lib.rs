@@ -7,8 +7,10 @@
 
 extern crate alloc;
 
+#[cfg(feature = "builder")]
 pub mod builder;
 
+#[cfg(feature = "builder")]
 pub use builder::{StateFs, StateFsBuilder, StateFsError};
 #[cfg(feature = "bridge-config")]
 pub use statefs_adapter_bridge_config::{ConfigBridge, StateFsSource};
@@ -257,7 +259,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "toml", feature = "json"))]
+    #[cfg(all(feature = "builder", feature = "toml", feature = "json"))]
     fn test_statefs_builder_composition() {
         let store = StateFs::builder()
             .with_toml_str(
@@ -308,7 +310,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "snapshot", feature = "toml"))]
+    #[cfg(all(feature = "builder", feature = "snapshot", feature = "toml"))]
     fn test_builder_layering_and_snapshot_merge() {
         // Prepare a binary snapshot
         let mut snap_store = StateFs::new_store();
@@ -370,6 +372,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "builder")]
     fn test_builder_conflicting_readonly_overrides() {
         // Readonly node insertion
         let builder = StateFs::builder()
@@ -388,7 +391,12 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "toml", feature = "json", feature = "std"))]
+    #[cfg(all(
+        feature = "builder",
+        feature = "toml",
+        feature = "json",
+        feature = "std"
+    ))]
     fn test_builder_error_propagation_on_invalid_sources() {
         // Corrupt TOML
         let toml_err = StateFs::builder().with_toml_str("invalid = [toml unclosed");
@@ -407,7 +415,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "toml", feature = "serde"))]
+    #[cfg(all(feature = "builder", feature = "toml", feature = "serde"))]
     fn test_builder_serde_extract() {
         #[derive(Debug, PartialEq, serde::Deserialize)]
         struct ServerCfg {
